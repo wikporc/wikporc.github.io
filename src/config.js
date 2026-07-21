@@ -1,26 +1,14 @@
 module.exports = {
-  email: 'brittany.chiang@gmail.com',
+  email: 'w.porczynski123@gmail.com',
 
   socialMedia: [
     {
       name: 'GitHub',
-      url: 'https://github.com/bchiang7',
-    },
-    {
-      name: 'Instagram',
-      url: 'https://www.instagram.com/bchiang7',
-    },
-    {
-      name: 'Twitter',
-      url: 'https://twitter.com/bchiang7',
+      url: 'https://github.com/wikporc',
     },
     {
       name: 'Linkedin',
-      url: 'https://www.linkedin.com/in/bchiang7',
-    },
-    {
-      name: 'Codepen',
-      url: 'https://codepen.io/bchiang7',
+      url: 'https://www.linkedin.com/in/wiktor-porczy%C5%84ski-87b0b91ab/',
     },
   ],
 
@@ -32,6 +20,10 @@ module.exports = {
     {
       name: 'Experience',
       url: '/#jobs',
+    },
+    {
+      name: 'Languages',
+      url: '/#languages',
     },
     {
       name: 'Work',

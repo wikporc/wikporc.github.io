@@ -141,8 +141,12 @@ const StyledTabPanel = styled.div`
   height: auto;
   padding: 10px 5px;
 
-  ul {
+  ul:not(.job-tech-list) {
     ${({ theme }) => theme.mixins.fancyList};
+
+    li {
+      text-align: justify;
+    }
   }
 
   h3 {
@@ -162,6 +166,28 @@ const StyledTabPanel = styled.div`
     font-family: var(--font-mono);
     font-size: var(--fz-xs);
   }
+
+  .job-tech-list {
+    display: flex;
+    flex-wrap: wrap;
+    padding: 0;
+    margin: 25px 0 0 0;
+    list-style: none;
+
+    li {
+      margin: 0 20px 5px 0;
+      color: var(--light-slate);
+      font-family: var(--font-mono);
+      font-size: var(--fz-xxs);
+      white-space: nowrap;
+
+      &:before {
+        content: '▹';
+        margin-right: 5px;
+        color: var(--green);
+      }
+    }
+  }
 `;
 
 const Jobs = () => {
@@ -179,6 +205,7 @@ const Jobs = () => {
               location
               range
               url
+              tech
             }
             html
           }
@@ -273,7 +300,7 @@ const Jobs = () => {
           {jobsData &&
             jobsData.map(({ node }, i) => {
               const { frontmatter, html } = node;
-              const { title, url, company, range } = frontmatter;
+              const { title, url, company, range, tech } = frontmatter;
 
               return (
                 <CSSTransition key={i} in={activeTabId === i} timeout={250} classNames="fade">
@@ -297,6 +324,14 @@ const Jobs = () => {
                     <p className="range">{range}</p>
 
                     <div dangerouslySetInnerHTML={{ __html: html }} />
+
+                    {tech && (
+                      <ul className="job-tech-list">
+                        {tech.map((tech, i) => (
+                          <li key={i}>{tech}</li>
+                        ))}
+                      </ul>
+                    )}
                   </StyledTabPanel>
                 </CSSTransition>
               );

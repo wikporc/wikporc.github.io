@@ -1,6 +1,8 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { useStaticQuery, graphql } from 'gatsby';
-import { GatsbyImage, getImage } from 'gatsby-plugin-image';
+import { GatsbyImage } from 'gatsby-plugin-image';
+import PropTypes from 'prop-types';
 import styled from 'styled-components';
 import sr from '@utils/sr';
 import { srConfig } from '@config';
@@ -179,6 +181,18 @@ const StyledProject = styled.li`
       color: var(--white);
       font-weight: normal;
     }
+
+    p {
+      text-align: justify;
+    }
+
+    ul {
+      ${({ theme }) => theme.mixins.fancyList};
+
+      li {
+        text-align: justify;
+      }
+    }
   }
 
   .project-tech-list {
@@ -233,11 +247,6 @@ const StyledProject = styled.li`
         height: 20px;
       }
     }
-
-    .cta {
-      ${({ theme }) => theme.mixins.smallButton};
-      margin: 10px;
-    }
   }
 
   .project-image {
@@ -253,55 +262,352 @@ const StyledProject = styled.li`
       opacity: 0.25;
     }
 
-    a {
+    .carousel {
+      position: relative;
       width: 100%;
       height: 100%;
-      background-color: var(--green);
+      background-color: var(--light-navy);
       border-radius: var(--border-radius);
       vertical-align: middle;
 
       &:hover,
-      &:focus {
-        background: transparent;
-        outline: 0;
-
-        &:before,
-        .img {
-          background: transparent;
-          filter: none;
+      &:focus-within {
+        .carousel-arrow {
+          opacity: 1;
         }
       }
+    }
 
-      &:before {
-        content: '';
-        position: absolute;
-        width: 100%;
-        height: 100%;
-        top: 0;
-        left: 0;
-        right: 0;
-        bottom: 0;
-        z-index: 3;
-        transition: var(--transition);
-        background-color: var(--navy);
-        mix-blend-mode: screen;
+    .carousel-image-button {
+      display: block;
+      width: 100%;
+      height: 100%;
+      padding: 0;
+      border: 0;
+      background: none;
+      cursor: pointer;
+    }
+
+    .carousel-arrow {
+      ${({ theme }) => theme.mixins.flexCenter};
+      position: absolute;
+      top: 50%;
+      z-index: 4;
+      width: 32px;
+      height: 32px;
+      padding: 0;
+      border: 0;
+      border-radius: 50%;
+      background-color: var(--light-navy);
+      color: var(--green);
+      opacity: 0;
+      cursor: pointer;
+      transform: translateY(-50%);
+      transition: var(--transition);
+
+      &:hover,
+      &:focus {
+        background-color: var(--lightest-navy);
+      }
+
+      &.prev {
+        left: 10px;
+      }
+      &.next {
+        right: 10px;
+      }
+
+      svg {
+        width: 18px;
+        height: 18px;
+      }
+
+      @media (max-width: 768px) {
+        opacity: 1;
+      }
+    }
+
+    .carousel-dots {
+      display: flex;
+      justify-content: center;
+      gap: 8px;
+      position: absolute;
+      right: 0;
+      bottom: 12px;
+      left: 0;
+      z-index: 4;
+    }
+
+    .carousel-dot {
+      width: 8px;
+      height: 8px;
+      padding: 0;
+      border: 0;
+      border-radius: 50%;
+      background-color: var(--lightest-navy);
+      cursor: pointer;
+      transition: var(--transition);
+
+      &.active {
+        background-color: var(--green);
       }
     }
 
     .img {
       border-radius: var(--border-radius);
-      mix-blend-mode: multiply;
-      filter: grayscale(100%) contrast(1) brightness(90%);
 
       @media (max-width: 768px) {
         object-fit: cover;
         width: auto;
         height: 100%;
-        filter: grayscale(100%) contrast(1) brightness(50%);
       }
     }
   }
 `;
+
+const StyledLightbox = styled.div`
+  ${({ theme }) => theme.mixins.flexCenter};
+  position: fixed;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  z-index: 999;
+  padding: 60px;
+  background-color: rgba(2, 12, 27, 0.9);
+  cursor: zoom-out;
+
+  @media (max-width: 600px) {
+    padding: 20px;
+  }
+
+  .lightbox-img {
+    max-width: 100%;
+    max-height: 100%;
+    cursor: default;
+
+    img {
+      border-radius: var(--border-radius);
+    }
+  }
+
+  .lightbox-close {
+    ${({ theme }) => theme.mixins.flexCenter};
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    width: 40px;
+    height: 40px;
+    padding: 0;
+    border: 0;
+    border-radius: 50%;
+    background-color: var(--light-navy);
+    color: var(--lightest-slate);
+    cursor: pointer;
+
+    &:hover,
+    &:focus {
+      color: var(--green);
+    }
+
+    svg {
+      width: 20px;
+      height: 20px;
+    }
+  }
+
+  .lightbox-arrow {
+    ${({ theme }) => theme.mixins.flexCenter};
+    position: absolute;
+    top: 50%;
+    width: 48px;
+    height: 48px;
+    padding: 0;
+    border: 0;
+    border-radius: 50%;
+    background-color: var(--light-navy);
+    color: var(--green);
+    cursor: pointer;
+    transform: translateY(-50%);
+
+    &:hover,
+    &:focus {
+      background-color: var(--lightest-navy);
+    }
+
+    &.prev {
+      left: 20px;
+    }
+    &.next {
+      right: 20px;
+    }
+
+    svg {
+      width: 24px;
+      height: 24px;
+    }
+
+    @media (max-width: 600px) {
+      width: 36px;
+      height: 36px;
+
+      &.prev {
+        left: 10px;
+      }
+      &.next {
+        right: 10px;
+      }
+    }
+  }
+
+  .lightbox-counter {
+    position: absolute;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    color: var(--light-slate);
+    font-family: var(--font-mono);
+    font-size: var(--fz-sm);
+  }
+`;
+
+const ImageCarousel = ({ images, title }) => {
+  const [activeIndex, setActiveIndex] = useState(0);
+  const [isLightboxOpen, setIsLightboxOpen] = useState(false);
+  const thumbImage = images[activeIndex]?.childImageSharp?.thumb;
+  const fullImage = images[activeIndex]?.childImageSharp?.full;
+  const hasMultiple = images.length > 1;
+
+  const showPrev = () => setActiveIndex(i => (i === 0 ? images.length - 1 : i - 1));
+  const showNext = () => setActiveIndex(i => (i === images.length - 1 ? 0 : i + 1));
+
+  useEffect(() => {
+    if (!isLightboxOpen) {
+      return;
+    }
+
+    const onKeyDown = e => {
+      if (e.key === 'Escape') {
+        setIsLightboxOpen(false);
+      } else if (hasMultiple && e.key === 'ArrowLeft') {
+        showPrev();
+      } else if (hasMultiple && e.key === 'ArrowRight') {
+        showNext();
+      }
+    };
+
+    document.body.style.overflow = 'hidden';
+    window.addEventListener('keydown', onKeyDown);
+
+    return () => {
+      document.body.style.overflow = '';
+      window.removeEventListener('keydown', onKeyDown);
+    };
+  }, [isLightboxOpen, hasMultiple]);
+
+  return (
+    <div className="carousel">
+      <button
+        className="carousel-image-button"
+        aria-label={`View full-size image ${activeIndex + 1} of ${images.length}`}
+        onClick={() => setIsLightboxOpen(true)}>
+        <GatsbyImage
+          image={thumbImage}
+          alt={`${title} screenshot ${activeIndex + 1}`}
+          className="img"
+        />
+      </button>
+
+      {hasMultiple && (
+        <>
+          <button className="carousel-arrow prev" aria-label="Previous image" onClick={showPrev}>
+            <Icon name="ChevronLeft" />
+          </button>
+          <button className="carousel-arrow next" aria-label="Next image" onClick={showNext}>
+            <Icon name="ChevronRight" />
+          </button>
+
+          <div className="carousel-dots">
+            {images.map((_, i) => (
+              <button
+                key={i}
+                className={`carousel-dot${i === activeIndex ? ' active' : ''}`}
+                aria-label={`Go to image ${i + 1}`}
+                aria-current={i === activeIndex}
+                onClick={() => setActiveIndex(i)}
+              />
+            ))}
+          </div>
+        </>
+      )}
+
+      {isLightboxOpen &&
+        typeof document !== 'undefined' &&
+        createPortal(
+          <StyledLightbox
+            role="dialog"
+            aria-modal="true"
+            aria-label={`${title} image ${activeIndex + 1} of ${images.length}`}
+            onClick={() => setIsLightboxOpen(false)}>
+            <button
+              className="lightbox-close"
+              aria-label="Close full-size image"
+              onClick={() => setIsLightboxOpen(false)}>
+              <Icon name="Close" />
+            </button>
+
+            <GatsbyImage
+              image={fullImage}
+              alt={`${title} screenshot ${activeIndex + 1}`}
+              className="lightbox-img"
+              objectFit="contain"
+              onClick={e => e.stopPropagation()}
+            />
+
+            {hasMultiple && (
+              <>
+                <button
+                  className="lightbox-arrow prev"
+                  aria-label="Previous image"
+                  onClick={e => {
+                    e.stopPropagation();
+                    showPrev();
+                  }}>
+                  <Icon name="ChevronLeft" />
+                </button>
+                <button
+                  className="lightbox-arrow next"
+                  aria-label="Next image"
+                  onClick={e => {
+                    e.stopPropagation();
+                    showNext();
+                  }}>
+                  <Icon name="ChevronRight" />
+                </button>
+
+                <div className="lightbox-counter">
+                  {activeIndex + 1} / {images.length}
+                </div>
+              </>
+            )}
+          </StyledLightbox>,
+          document.body,
+        )}
+    </div>
+  );
+};
+
+ImageCarousel.propTypes = {
+  images: PropTypes.arrayOf(
+    PropTypes.shape({
+      childImageSharp: PropTypes.shape({
+        thumb: PropTypes.object,
+        full: PropTypes.object,
+      }),
+    }),
+  ).isRequired,
+  title: PropTypes.string.isRequired,
+};
 
 const Featured = () => {
   const data = useStaticQuery(graphql`
@@ -314,15 +620,23 @@ const Featured = () => {
           node {
             frontmatter {
               title
-              cover {
+              images {
                 childImageSharp {
-                  gatsbyImageData(width: 700, placeholder: BLURRED, formats: [AUTO, WEBP, AVIF])
+                  thumb: gatsbyImageData(
+                    width: 700
+                    placeholder: BLURRED
+                    formats: [AUTO, WEBP, AVIF]
+                  )
+                  full: gatsbyImageData(
+                    width: 1600
+                    placeholder: BLURRED
+                    formats: [AUTO, WEBP, AVIF]
+                  )
                 }
               }
               tech
               github
               external
-              cta
             }
             html
           }
@@ -355,8 +669,7 @@ const Featured = () => {
         {featuredProjects &&
           featuredProjects.map(({ node }, i) => {
             const { frontmatter, html } = node;
-            const { external, title, tech, github, cover, cta } = frontmatter;
-            const image = getImage(cover);
+            const { external, title, tech, github, images } = frontmatter;
 
             return (
               <StyledProject key={i} ref={el => (revealProjects.current[i] = el)}>
@@ -365,7 +678,7 @@ const Featured = () => {
                     <p className="project-overline">Featured Project</p>
 
                     <h3 className="project-title">
-                      <a href={external}>{title}</a>
+                      {external ? <a href={external}>{title}</a> : title}
                     </h3>
 
                     <div
@@ -373,7 +686,7 @@ const Featured = () => {
                       dangerouslySetInnerHTML={{ __html: html }}
                     />
 
-                    {tech.length && (
+                    {tech?.length > 0 && (
                       <ul className="project-tech-list">
                         {tech.map((tech, i) => (
                           <li key={i}>{tech}</li>
@@ -382,17 +695,12 @@ const Featured = () => {
                     )}
 
                     <div className="project-links">
-                      {cta && (
-                        <a href={cta} aria-label="Course Link" className="cta">
-                          Learn More
-                        </a>
-                      )}
                       {github && (
                         <a href={github} aria-label="GitHub Link">
                           <Icon name="GitHub" />
                         </a>
                       )}
-                      {external && !cta && (
+                      {external && (
                         <a href={external} aria-label="External Link" className="external">
                           <Icon name="External" />
                         </a>
@@ -402,9 +710,7 @@ const Featured = () => {
                 </div>
 
                 <div className="project-image">
-                  <a href={external ? external : github ? github : '#'}>
-                    <GatsbyImage image={image} alt={title} className="img" />
-                  </a>
+                  {images && images.length > 0 && <ImageCarousel images={images} title={title} />}
                 </div>
               </StyledProject>
             );
