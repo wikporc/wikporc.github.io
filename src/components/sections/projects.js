@@ -138,6 +138,7 @@ const StyledProject = styled.li`
   .project-description {
     color: var(--light-slate);
     font-size: 17px;
+    text-align: justify;
 
     a {
       ${({ theme }) => theme.mixins.inlineLink};
