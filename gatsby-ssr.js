@@ -4,4 +4,15 @@
  * See: https://www.gatsbyjs.org/docs/ssr-apis/
  */
 
- // You can delete this file if you're not using it
+import React from 'react';
+
+export const onRenderBody = ({ setPostBodyComponents }) => {
+  setPostBodyComponents([
+    <script
+      key="goatcounter"
+      data-goatcounter="https://130.61.161.66/count"
+      async
+      src="https://130.61.161.66/count.js"
+    />,
+  ]);
+};
